@@ -52,3 +52,33 @@ This document outlines the changes and improvements made during the process of t
 
 - Transforming the procedure into a function is a good programming practice that enhances code reusability and readability.
 
+## 4. Training
+### 4.a. Data Split (Training and Validation)
+- In the initial code, the data split and preparation was done in one chunk of code. The major issue was that the `data` DataFrame was used instead of `training_data` DataFrame, which was created earlier. This could lead to data leakage because the test data might be included in the training data. 
+
+#### Changes Made
+- Changed the use of the `training_data` DataFrame instead of the `data` DataFrame.
+- To enhance readability, reusability and maintainability, the process was refactored into a class named `DataPreparation` with a method `prepare_data()`.
+
+#### Example of Usage
+
+Here's how you would use the `DataPreparation` class to prepare the data:
+
+```python
+data_preparation = DataPreparation(test_size=0.33, random_state=42)
+x_train, x_test, y_train, y_test = data_preparation.prepare_data(data)
+
+print(f"train shape: {x_train.shape} | test shape: {x_test.shape}")
+```
+
+#### Justification
+- This change enhances the readability of the code by clearly delineating the steps in the data preparation process. It also increases the modularity of the code, making it easier to reuse the data preparation process in different parts of the project or in future projects.
+
+
+## 6.b Model Selection
+
+#### Justification
+- Based on the conclusions from the Data Science team, the model should be trained with the top 10 most important features and with balanced classes.
+
+- Regarding the choice of the model, it was decided to use Logistic Regression over XGBoost due to its simplicity, speed, and greater interpretability. Although both models showed similar performance in evaluation metrics (precision, recall, F1-score), Logistic Regression was faster. While the time difference may seem small, it can be significant when it comes to implementing the model in a production environment where efficiency and speed are critical. On the other hand, XGBoost is known for its ability to handle datasets with many features, but this is not a significant factor in our case since we have already selected the top 10 most important features for our model.
+
