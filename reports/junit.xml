@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites><testsuite name="pytest" errors="0" failures="4" skipped="0" tests="4" time="28.560" timestamp="2023-07-19T01:28:53.582672" hostname="Air-de-Felipe.home"><testcase classname="tests.model.test_model.TestModel" name="test_model_fit" time="6.792"><failure message="ValueError: could not convert string to float: '2017-01-01 23:30:00'">self = &lt;tests.model.test_model.TestModel testMethod=test_model_fit&gt;
+
+    def test_model_fit(
+        self
+    ):
+        features, target = self.model.preprocess(
+            data=self.data,
+            target_column="delay"
+        )
+    
+        _, features_validation, _, target_validation = train_test_split(features, target, test_size = 0.33, random_state = 42)
+    
+&gt;       self.model.fit(
+            features=features,
+            target=target
+        )
+
+tests/model/test_model.py:72: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+challenge/model.py:177: in fit
+    self._model.fit(features, target)
+venv/lib/python3.11/site-packages/sklearn/linear_model/_logistic.py:1196: in fit
+    X, y = self._validate_data(
+venv/lib/python3.11/site-packages/sklearn/base.py:584: in _validate_data
+    X, y = check_X_y(X, y, **check_params)
+venv/lib/python3.11/site-packages/sklearn/utils/validation.py:1106: in check_X_y
+    X = check_array(
+venv/lib/python3.11/site-packages/sklearn/utils/validation.py:879: in check_array
+    array = _asarray_with_order(array, order=order, dtype=dtype, xp=xp)
+venv/lib/python3.11/site-packages/sklearn/utils/_array_api.py:185: in _asarray_with_order
+    array = numpy.asarray(array, order=order, dtype=dtype)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self =                    Fecha-I Vlo-I Ori-I Des-I Emp-I              Fecha-O  ...              OPERA  SIGLAORI SIGLADES per...-12-31 15:04:00  ...       JetSmart SPA  Santiago     Lima      tarde            0       9.0
+
+[68206 rows x 21 columns]
+dtype = dtype('float64')
+
+    def __array__(self, dtype: npt.DTypeLike | None = None) -&gt; np.ndarray:
+        values = self._values
+&gt;       arr = np.asarray(values, dtype=dtype)
+E       ValueError: could not convert string to float: '2017-01-01 23:30:00'
+
+venv/lib/python3.11/site-packages/pandas/core/generic.py:1998: ValueError</failure></testcase><testcase classname="tests.model.test_model.TestModel" name="test_model_predict" time="6.754"><failure message="sklearn.exceptions.NotFittedError: This LogisticRegression instance is not fitted yet. Call 'fit' with appropriate arguments before using this estimator.">self = &lt;tests.model.test_model.TestModel testMethod=test_model_predict&gt;
+
+    def test_model_predict(
+        self
+    ):
+        features = self.model.preprocess(
+            data=self.data
+        )
+    
+&gt;       predicted_targets = self.model.predict(
+            features=features
+        )
+
+tests/model/test_model.py:95: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+challenge/model.py:196: in predict
+    return self._model.predict(features)
+venv/lib/python3.11/site-packages/sklearn/linear_model/_base.py:419: in predict
+    scores = self.decision_function(X)
+venv/lib/python3.11/site-packages/sklearn/linear_model/_base.py:397: in decision_function
+    check_is_fitted(self)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+estimator = LogisticRegression(class_weight='balanced'), attributes = None
+
+    def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
+        """Perform is_fitted validation for estimator.
+    
+        Checks if the estimator is fitted by verifying the presence of
+        fitted attributes (ending with a trailing underscore) and otherwise
+        raises a NotFittedError with the given message.
+    
+        If an estimator does not set any attributes with a trailing underscore, it
+        can define a ``__sklearn_is_fitted__`` method returning a boolean to specify if the
+        estimator is fitted or not.
+    
+        Parameters
+        ----------
+        estimator : estimator instance
+            Estimator instance for which the check is performed.
+    
+        attributes : str, list or tuple of str, default=None
+            Attribute name(s) given as string or a list/tuple of strings
+            Eg.: ``["coef_", "estimator_", ...], "coef_"``
+    
+            If `None`, `estimator` is considered fitted if there exist an
+            attribute that ends with a underscore and does not start with double
+            underscore.
+    
+        msg : str, default=None
+            The default error message is, "This %(name)s instance is not fitted
+            yet. Call 'fit' with appropriate arguments before using this
+            estimator."
+    
+            For custom messages if "%(name)s" is present in the message string,
+            it is substituted for the estimator name.
+    
+            Eg. : "Estimator, %(name)s, must be fitted before sparsifying".
+    
+        all_or_any : callable, {all, any}, default=all
+            Specify whether all or any of the given attributes must exist.
+    
+        Raises
+        ------
+        TypeError
+            If the estimator is a class or not an estimator instance
+    
+        NotFittedError
+            If the attributes are not found.
+        """
+        if isclass(estimator):
+            raise TypeError("{} is a class, not an instance.".format(estimator))
+        if msg is None:
+            msg = (
+                "This %(name)s instance is not fitted yet. Call 'fit' with "
+                "appropriate arguments before using this estimator."
+            )
+    
+        if not hasattr(estimator, "fit"):
+            raise TypeError("%s is not an estimator instance." % (estimator))
+    
+        if attributes is not None:
+            if not isinstance(attributes, (list, tuple)):
+                attributes = [attributes]
+            fitted = all_or_any([hasattr(estimator, attr) for attr in attributes])
+        elif hasattr(estimator, "__sklearn_is_fitted__"):
+            fitted = estimator.__sklearn_is_fitted__()
+        else:
+            fitted = [
+                v for v in vars(estimator) if v.endswith("_") and not v.startswith("__")
+            ]
+    
+        if not fitted:
+&gt;           raise NotFittedError(msg % {"name": type(estimator).__name__})
+E           sklearn.exceptions.NotFittedError: This LogisticRegression instance is not fitted yet. Call 'fit' with appropriate arguments before using this estimator.
+
+venv/lib/python3.11/site-packages/sklearn/utils/validation.py:1390: NotFittedError</failure></testcase><testcase classname="tests.model.test_model.TestModel" name="test_model_preprocess_for_serving" time="6.794"><failure message="ValueError: ('Shapes must match', (21,), (10,))">self = &lt;tests.model.test_model.TestModel testMethod=test_model_preprocess_for_serving&gt;
+
+    def test_model_preprocess_for_serving(
+        self
+    ):
+        features = self.model.preprocess(
+            data=self.data
+        )
+    
+        assert isinstance(features, pd.DataFrame)
+&gt;       assert features.columns == [
+            "OPERA_Latin American Wings",
+            "MES_7",
+            "MES_10",
+            "OPERA_Grupo LATAM",
+            "MES_12",
+            "TIPOVUELO_I",
+            "MES_4",
+            "MES_11",
+            "OPERA_Sky Airline",
+            "OPERA_Copa Air"
+        ]
+
+tests/model/test_model.py:49: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+venv/lib/python3.11/site-packages/pandas/core/ops/common.py:81: in new_method
+    return method(self, other)
+venv/lib/python3.11/site-packages/pandas/core/arraylike.py:40: in __eq__
+    return self._cmp_method(other, operator.eq)
+venv/lib/python3.11/site-packages/pandas/core/indexes/base.py:6776: in _cmp_method
+    result = ops.comp_method_OBJECT_ARRAY(op, self._values, other)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+op = &lt;built-in function eq&gt;
+x = array(['Fecha-I', 'Vlo-I', 'Ori-I', 'Des-I', 'Emp-I', 'Fecha-O', 'Vlo-O',
+       'Ori-O', 'Des-O', 'Emp-O', 'DIA', 'ME...M',
+       'TIPOVUELO', 'OPERA', 'SIGLAORI', 'SIGLADES', 'period_day',
+       'high_season', 'min_diff'], dtype=object)
+y = array(['OPERA_Latin American Wings', 'MES_7', 'MES_10',
+       'OPERA_Grupo LATAM', 'MES_12', 'TIPOVUELO_I', 'MES_4', 'MES_11',
+       'OPERA_Sky Airline', 'OPERA_Copa Air'], dtype=object)
+
+    def comp_method_OBJECT_ARRAY(op, x, y):
+        if isinstance(y, list):
+            y = construct_1d_object_array_from_listlike(y)
+    
+        if isinstance(y, (np.ndarray, ABCSeries, ABCIndex)):
+            if not is_object_dtype(y.dtype):
+                y = y.astype(np.object_)
+    
+            if isinstance(y, (ABCSeries, ABCIndex)):
+                y = y._values
+    
+            if x.shape != y.shape:
+&gt;               raise ValueError("Shapes must match", x.shape, y.shape)
+E               ValueError: ('Shapes must match', (21,), (10,))
+
+venv/lib/python3.11/site-packages/pandas/core/ops/array_ops.py:79: ValueError</failure></testcase><testcase classname="tests.model.test_model.TestModel" name="test_model_preprocess_for_training" time="6.795"><failure message="ValueError: ('Shapes must match', (21,), (10,))">self = &lt;tests.model.test_model.TestModel testMethod=test_model_preprocess_for_training&gt;
+
+    def test_model_preprocess_for_training(
+        self
+    ):
+        features, target = self.model.preprocess(
+            data=self.data,
+            target_column="delay"
+        )
+    
+        assert isinstance(features, pd.DataFrame)
+&gt;       assert features.columns == [
+            "OPERA_Latin American Wings",
+            "MES_7",
+            "MES_10",
+            "OPERA_Grupo LATAM",
+            "MES_12",
+            "TIPOVUELO_I",
+            "MES_4",
+            "MES_11",
+            "OPERA_Sky Airline",
+            "OPERA_Copa Air"
+        ]
+
+tests/model/test_model.py:24: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+venv/lib/python3.11/site-packages/pandas/core/ops/common.py:81: in new_method
+    return method(self, other)
+venv/lib/python3.11/site-packages/pandas/core/arraylike.py:40: in __eq__
+    return self._cmp_method(other, operator.eq)
+venv/lib/python3.11/site-packages/pandas/core/indexes/base.py:6776: in _cmp_method
+    result = ops.comp_method_OBJECT_ARRAY(op, self._values, other)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+op = &lt;built-in function eq&gt;
+x = array(['Fecha-I', 'Vlo-I', 'Ori-I', 'Des-I', 'Emp-I', 'Fecha-O', 'Vlo-O',
+       'Ori-O', 'Des-O', 'Emp-O', 'DIA', 'ME...M',
+       'TIPOVUELO', 'OPERA', 'SIGLAORI', 'SIGLADES', 'period_day',
+       'high_season', 'min_diff'], dtype=object)
+y = array(['OPERA_Latin American Wings', 'MES_7', 'MES_10',
+       'OPERA_Grupo LATAM', 'MES_12', 'TIPOVUELO_I', 'MES_4', 'MES_11',
+       'OPERA_Sky Airline', 'OPERA_Copa Air'], dtype=object)
+
+    def comp_method_OBJECT_ARRAY(op, x, y):
+        if isinstance(y, list):
+            y = construct_1d_object_array_from_listlike(y)
+    
+        if isinstance(y, (np.ndarray, ABCSeries, ABCIndex)):
+            if not is_object_dtype(y.dtype):
+                y = y.astype(np.object_)
+    
+            if isinstance(y, (ABCSeries, ABCIndex)):
+                y = y._values
+    
+            if x.shape != y.shape:
+&gt;               raise ValueError("Shapes must match", x.shape, y.shape)
+E               ValueError: ('Shapes must match', (21,), (10,))
+
+venv/lib/python3.11/site-packages/pandas/core/ops/array_ops.py:79: ValueError</failure></testcase></testsuite></testsuites>
