@@ -1,11 +1,10 @@
 # Standard library imports
 from datetime import datetime
-from typing import Tuple, Union, List
+from typing import Tuple, List
 
 # Third-party imports
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import train_test_split
 from sklearn.utils import shuffle
 import xgboost as xgb
 
@@ -53,7 +52,8 @@ def get_date_range(start, end, year):
     end_date = datetime.strptime(end, '%d-%b').replace(year=year)
     return start_date, end_date
 
-# The function was optimized for better performance and readability, and includes error handling.
+
+
 def is_high_season(fecha):
     """
     Function to determine if a given date falls within the high season.
@@ -102,7 +102,7 @@ def get_min_diff(row):
         print(f"Error calculating min_diff: {e}")
         return None
     return min_diff
-import numpy as np
+
 
 def calculate_delay(data, threshold=15):
     """
@@ -198,7 +198,6 @@ class DelayModel:
 
         self._model = xgb.XGBClassifier(random_state=1, learning_rate=0.01, scale_pos_weight = scale)
         self._model.fit(features, y_train)
-        
         
     def predict(
         self, 
