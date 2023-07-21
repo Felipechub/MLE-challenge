@@ -7,6 +7,8 @@ import numpy as np
 import pandas as pd
 from sklearn.utils import shuffle
 import xgboost as xgb
+from joblib import dump, load
+
 
 # Constants
 HIGH_SEASON_RANGES = [
@@ -214,3 +216,9 @@ class DelayModel:
         """
         predictions = self._model.predict(features)
         return [1 if pred > 0.5 else 0 for pred in predictions]
+
+    def save(self, filepath):
+        dump(self._model, filepath)
+
+    def load(self, filepath):
+        self._model = load(filepath)
