@@ -1,8 +1,13 @@
-# Imports
+# Standard library imports
 from datetime import datetime
-import pandas as pd
-import xgboost as xgb
 from typing import Tuple, Union, List
+
+# Third-party imports
+import numpy as np
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.utils import shuffle
+import xgboost as xgb
 
 # Constants
 HIGH_SEASON_RANGES = [
@@ -112,45 +117,18 @@ def calculate_delay(data, threshold=15):
     """
     return np.where(data['min_diff'] > threshold, 1, 0)
 
-from sklearn.model_selection import train_test_split
-
-class DataPreparation:
-    def __init__(self, test_size=0.33, random_state=42):
-        self.test_size = test_size
-        self.random_state = random_state
-
-    def prepare_data(self, data):
-        data = self._one_hot_encode(data)
-        return self._train_test_split(data)
-
-    def _one_hot_encode(self, data):
-        features = pd.concat([
-            pd.get_dummies(data['OPERA'], prefix='OPERA'),
-            pd.get_dummies(data['TIPOVUELO'], prefix='TIPOVUELO'), 
-            pd.get_dummies(data['MES'], prefix='MES')], 
-            axis=1
-        )
-        target = data['delay']
-        return features, target
-
-    def _train_test_split(self, data):
-        x_train, x_test, y_train, y_test = train_test_split(*data, test_size=self.test_size, random_state=self.random_state)
-        return x_train, x_test, y_train, y_test
-
 
 class DelayModel:
-
     def __init__(
         self
     ):
         self._model = xgb.XGBClassifier(random_state=1, learning_rate=0.01)
-        self._top_features = None
-        
+
     def preprocess(
-        self,
-        data: pd.DataFrame,
+        self, 
+        data: pd.DataFrame, 
         target_column: str = None
-    ) -> pd.DataFrame | Tuple[pd.DataFrame, pd.DataFrame]:
+        ) -> pd.DataFrame | Tuple[pd.DataFrame, pd.DataFrame]:
         """
         Prepare raw data for training or predict.
 
@@ -159,40 +137,51 @@ class DelayModel:
             target_column (str, optional): if set, the target is returned.
 
         Returns:
-            Tuple[pd.DataFrame, pd.DataFrame]: features and target, if target_column is set.
+            Tuple[pd.DataFrame, pd.DataFrame]: features and target.
             or
-            pd.DataFrame: features, if target_column is not set.
-        """
-        # Create a copy to avoid modifying the original data
-        data_copy = data.copy()
-        
-        # Determine the time of day for each flight
-        data_copy['period_day'] = data_copy['Fecha-I'].apply(get_period_day)
-        
-        # Determine if each flight is in the high season
-        data_copy['high_season'] = data_copy['Fecha-I'].apply(is_high_season)
-        
-        # Calculate the difference in minutes between the 'Fecha-O' and 'Fecha-I'
-        data_copy['min_diff'] = data_copy.apply(get_min_diff, axis=1)
-        
-        if target_column:
-            # Create a binary delay indicator based on the difference in minutes
-            data_copy[target_column] = calculate_delay(data_copy, THRESHOLD_IN_MINUTES)
-            
-            # Separate features from the target variable
-            target = data_copy[target_column]
-            features = data_copy.drop(columns=target_column)
-            
-            return features, target
-        else:
-            return data_copy
+            pd.DataFrame: features.
+        """        
 
+        # Apply your preprocessing steps
+        data['period_day'] = data['Fecha-I'].apply(get_period_day)
+        data['high_season'] = data['Fecha-I'].apply(is_high_season)
+        data['min_diff'] = data.apply(get_min_diff, axis=1)
+        data['delay'] = np.where(data['min_diff'] > THRESHOLD_IN_MINUTES, 1, 0)
+        
+        training_data = shuffle(data[['OPERA', 'MES', 'TIPOVUELO', 'SIGLADES', 'DIANOM', 'delay']], random_state = 111)
+        features = pd.concat([
+            pd.get_dummies(training_data['OPERA'], prefix = 'OPERA'),
+            pd.get_dummies(training_data['TIPOVUELO'], prefix = 'TIPOVUELO'),
+            pd.get_dummies(training_data['MES'], prefix = 'MES')],
+            axis = 1
+        )
+        
+        top_10_features = [
+                    "OPERA_Latin American Wings",
+                    "MES_7",
+                    "MES_10",
+                    "OPERA_Grupo LATAM",
+                    "MES_12",
+                    "TIPOVUELO_I",
+                    "MES_4",
+                    "MES_11",
+                    "OPERA_Sky Airline",
+                    "OPERA_Copa Air"
+                ]
+        
+        # Check if the target column is specified
+        if target_column != None:
+            target = training_data[target_column]
+
+            return features[top_10_features], pd.DataFrame(target)
+        else:
+            return features[top_10_features]
 
     def fit(
-        self,
-        features: pd.DataFrame,
+        self, 
+        features: pd.DataFrame, 
         target: pd.DataFrame
-    ) -> None:
+        ) -> None:
         """
         Fit model with preprocessed data.
 
@@ -200,13 +189,21 @@ class DelayModel:
             features (pd.DataFrame): preprocessed data.
             target (pd.DataFrame): target.
         """
-        self.model.fit(features, target)
+        
+        y_train = target.iloc[:, 0]
 
+        n_y0 = len(y_train[y_train == 0])
+        n_y1 = len(y_train[y_train == 1])
+        scale = n_y0/n_y1
 
+        self._model = xgb.XGBClassifier(random_state=1, learning_rate=0.01, scale_pos_weight = scale)
+        self._model.fit(features, y_train)
+        
+        
     def predict(
-        self,
+        self, 
         features: pd.DataFrame
-    ) -> List[int]:
+        ) -> List[int]:
         """
         Predict delays for new flights.
 
@@ -214,9 +211,7 @@ class DelayModel:
             features (pd.DataFrame): preprocessed data.
         
         Returns:
-            List[int]: predicted targets.
+            (List[int]): predicted targets.
         """
-        if self._model is None:
-            raise Exception("The model must be fitted with 'fit' before predictions can be made.")
-        
-        return self._model.predict(features)
+        predictions = self._model.predict(features)
+        return [1 if pred > 0.5 else 0 for pred in predictions]

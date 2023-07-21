@@ -21,7 +21,7 @@ class TestModel(unittest.TestCase):
         )
 
         assert isinstance(features, pd.DataFrame)
-        assert features.columns == [
+        assert features.columns.to_list() == [
             "OPERA_Latin American Wings", 
             "MES_7",
             "MES_10",
@@ -46,7 +46,7 @@ class TestModel(unittest.TestCase):
         )
 
         assert isinstance(features, pd.DataFrame)
-        assert features.columns == [
+        assert features.columns.to_list() == [
             "OPERA_Latin American Wings", 
             "MES_7",
             "MES_10",
@@ -88,9 +88,14 @@ class TestModel(unittest.TestCase):
     def test_model_predict(
         self
     ):
-        features = self.model.preprocess(
-            data=self.data
-        )
+        # x_train, y_train = self.model.preprocess(data=self.data, target_column='delay')
+        # self.model.fit(x_train, y_train)
+        features, target = self.model.preprocess(data=self.data, target_column='delay')
+        self.model.fit(features, target)
+
+        # features = self.model.preprocess(
+        #     data=self.data
+        # )
 
         predicted_targets = self.model.predict(
             features=features
