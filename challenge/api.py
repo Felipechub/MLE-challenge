@@ -3,8 +3,9 @@ from typing import List
 
 from pydantic import BaseModel
 import pandas as pd
-from challenge.model import DelayModel
+from challenge.model import DelayModel, InvalidDateFormatError
 import numpy as np
+from fastapi.responses import JSONResponse
 
 def create_features(flight_info_list: dict) -> pd.DataFrame:
     """
@@ -39,10 +40,16 @@ def create_features(flight_info_list: dict) -> pd.DataFrame:
         for column in feature_columns:
             feature, value = column.split('_')
 
-            if feature not in flight_info:
-                raise ValueError(f"Feature '{feature}' not provided in flight info.")
-            if feature == "MES" and (flight_info[feature] < 1 or flight_info[feature] > 12):
-                raise ValueError("Month (MES) must be between 1 and 12.")
+            # if feature not in flight_info:
+            #     raise ValueError(f"Feature '{feature}' not provided in flight info.")
+            
+            if feature == "MES":
+                # if type(flight_info[feature]) != int:
+                #     raise ValueError("Month (MES) must be an integer.")
+                if flight_info[feature] < 1 or flight_info[feature] > 12:
+                    raise ValueError("Month (MES) must be between 1 and 12.")
+            
+            # Check if TIPOVUELO is either 'I' or 'N'
             if feature == "TIPOVUELO" and flight_info[feature] not in ["I", "N"]:
                 raise ValueError("TIPOVUELO must be either 'I' or 'N'.")
 
@@ -54,10 +61,6 @@ def create_features(flight_info_list: dict) -> pd.DataFrame:
         flight_features_df = pd.concat([flight_features_df, single_flight_features_df], ignore_index=True)
 
     return flight_features_df
-
-
-
-
 
 app = fastapi.FastAPI()
 
@@ -72,11 +75,13 @@ class FlightList(BaseModel):
 
 model = DelayModel()
 
+
 @app.get("/health", status_code=200)
 async def get_health() -> dict:
     return {
         "status": "OK"
     }
+
 
 @app.post("/predict", status_code=200)
 async def post_predict(flight_info: FlightList) -> dict:
@@ -85,26 +90,23 @@ async def post_predict(flight_info: FlightList) -> dict:
         flights = flight_info.flights
         data = pd.DataFrame([dict(flight) for flight in flights])
         
-        # model = DelayModel()
         model.load('data/modelo.joblib')
         
         data = create_features(flight_info.dict())
-
-
-        # Llama a tu modelo con el DataFrame para obtener las predicciones.
         predictions = model.predict(data)
         
-        # Devuelve las predicciones en el formato deseado.
         return {"predict": predictions}
 
-    except ValueError:
-        return fastapi.Response(content="Invalid data provided", status_code=400)
-
+    except (ValueError, KeyError, InvalidDateFormatError) as e:
+        return JSONResponse(status_code=400, content={"message": str(e)})
 
 @app.post("/train", status_code=200)
 async def train_model() -> dict:
-    # Cargar los datos
-    data = pd.read_csv('data/data.csv')
+    try:
+        # Cargar los datos
+        data = pd.read_csv('data/data.csv', dtype={1: str, 6: str})
+    except Exception as e:
+        raise JSONResponse(status_code=400, detail="Failed to load data.")
 
     # Crear una instancia de tu modelo
     model = DelayModel()
@@ -116,7 +118,7 @@ async def train_model() -> dict:
     model.fit(features=features, target=target)
 
     # Guardar el modelo entrenado para uso futuro
-    model.save('../data/modelo.joblib')
+    model.save('data/modelo.joblib')
 
     return {"status": "model trained and saved successfully"}
 

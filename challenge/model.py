@@ -10,6 +10,20 @@ import xgboost as xgb
 from joblib import dump, load
 
 
+class InvalidDateFormatError(Exception):
+    """Exception raised for errors in the date format.
+
+    Attributes:
+        date -- input date which caused the error
+        message -- explanation of the error
+    """
+
+    def __init__(self, date, message="Fecha tiene un formato inválido. Se espera '%Y-%m-%d %H:%M:%S'"):
+        self.date = date
+        self.message = message
+        super().__init__(self.message)
+
+
 # Constants
 HIGH_SEASON_RANGES = [
     ('15-Dec', '31-Dec'),
@@ -20,23 +34,41 @@ HIGH_SEASON_RANGES = [
 THRESHOLD_IN_MINUTES = 15
 
 # Functions
+# def get_period_day(date):
+#     # Convert string times to time objects once
+#     morning_min = datetime.strptime("05:00", '%H:%M').time()
+#     morning_max = datetime.strptime("11:59", '%H:%M').time()
+#     afternoon_min = datetime.strptime("12:00", '%H:%M').time()
+#     afternoon_max = datetime.strptime("18:59", '%H:%M').time()
+#     evening_min = datetime.strptime("19:00", '%H:%M').time()
+
+#     date_time = datetime.strptime(date, '%Y-%m-%d %H:%M:%S').time()
+    
+#     if morning_min <= date_time <= morning_max:
+#         return 'mañana'
+#     elif afternoon_min <= date_time <= afternoon_max:
+#         return 'tarde'
+#     else:
+#         return 'noche'
+
 def get_period_day(date):
-    # Convert string times to time objects once
+    try:
+        date_time = datetime.strptime(date, '%Y-%m-%d %H:%M:%S').time()
+    except ValueError:
+        raise InvalidDateFormatError(date)
+
     morning_min = datetime.strptime("05:00", '%H:%M').time()
     morning_max = datetime.strptime("11:59", '%H:%M').time()
     afternoon_min = datetime.strptime("12:00", '%H:%M').time()
     afternoon_max = datetime.strptime("18:59", '%H:%M').time()
     evening_min = datetime.strptime("19:00", '%H:%M').time()
 
-    date_time = datetime.strptime(date, '%Y-%m-%d %H:%M:%S').time()
-    
     if morning_min <= date_time <= morning_max:
         return 'mañana'
     elif afternoon_min <= date_time <= afternoon_max:
         return 'tarde'
     else:
         return 'noche'
-
 
 def get_date_range(start, end, year):
     """
@@ -56,32 +88,46 @@ def get_date_range(start, end, year):
 
 
 
-def is_high_season(fecha):
-    """
-    Function to determine if a given date falls within the high season.
+# def is_high_season(fecha):
+#     """
+#     Function to determine if a given date falls within the high season.
     
-    Args:
-        fecha (str): Date in '%Y-%m-%d %H:%M:%S' format.
+#     Args:
+#         fecha (str): Date in '%Y-%m-%d %H:%M:%S' format.
         
-    Returns:
-        int: Returns 1 if the date falls within the high season, and 0 otherwise.
-        If the date format is invalid, the function returns None and prints an error message.
-    """
-    try:
-        fecha = datetime.strptime(fecha, '%Y-%m-%d %H:%M:%S')
-    except ValueError:
-        print(f"Invalid date format: {fecha}")
-        return None
+#     Returns:
+#         int: Returns 1 if the date falls within the high season, and 0 otherwise.
+#         If the date format is invalid, the function returns None and prints an error message.
+#     """
+#     try:
+#         fecha = datetime.strptime(fecha, '%Y-%m-%d %H:%M:%S')
+#     except ValueError:
+#         print(f"Invalid date format: {fecha}")
+#         return None
     
-    fecha_año = fecha.year
+#     fecha_año = fecha.year
+
+#     for start, end in HIGH_SEASON_RANGES:
+#         range_start, range_end = get_date_range(start, end, fecha_año)
+#         if range_start <= fecha <= range_end:
+#             return 1
+
+#     return 0
+
+def is_high_season(date):
+    try:
+        date = datetime.strptime(date, '%Y-%m-%d %H:%M:%S')
+    except ValueError:
+        raise InvalidDateFormatError(date)
+
+    date_year = date.year
 
     for start, end in HIGH_SEASON_RANGES:
-        range_start, range_end = get_date_range(start, end, fecha_año)
-        if range_start <= fecha <= range_end:
+        range_start, range_end = get_date_range(start, end, date_year)
+        if range_start <= date <= range_end:
             return 1
 
     return 0
-
 
 def get_min_diff(row):
     """
