@@ -1,5 +1,6 @@
 import fastapi
 from typing import List
+import uvicorn
 
 from pydantic import BaseModel
 import pandas as pd
@@ -122,3 +123,6 @@ async def train_model() -> dict:
 
     return {"status": "model trained and saved successfully"}
 
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8080)

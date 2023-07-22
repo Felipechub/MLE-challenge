@@ -34,23 +34,6 @@ HIGH_SEASON_RANGES = [
 THRESHOLD_IN_MINUTES = 15
 
 # Functions
-# def get_period_day(date):
-#     # Convert string times to time objects once
-#     morning_min = datetime.strptime("05:00", '%H:%M').time()
-#     morning_max = datetime.strptime("11:59", '%H:%M').time()
-#     afternoon_min = datetime.strptime("12:00", '%H:%M').time()
-#     afternoon_max = datetime.strptime("18:59", '%H:%M').time()
-#     evening_min = datetime.strptime("19:00", '%H:%M').time()
-
-#     date_time = datetime.strptime(date, '%Y-%m-%d %H:%M:%S').time()
-    
-#     if morning_min <= date_time <= morning_max:
-#         return 'mañana'
-#     elif afternoon_min <= date_time <= afternoon_max:
-#         return 'tarde'
-#     else:
-#         return 'noche'
-
 def get_period_day(date):
     try:
         date_time = datetime.strptime(date, '%Y-%m-%d %H:%M:%S').time()
@@ -115,6 +98,16 @@ def get_date_range(start, end, year):
 #     return 0
 
 def is_high_season(date):
+    """
+    Function to determine if a given date falls within the high season.
+    
+    Args:
+        fecha (str): Date in '%Y-%m-%d %H:%M:%S' format.
+        
+    Returns:
+        int: Returns 1 if the date falls within the high season, and 0 otherwise.
+        If the date format is invalid, the function returns None and prints an error message.
+    """
     try:
         date = datetime.strptime(date, '%Y-%m-%d %H:%M:%S')
     except ValueError:
