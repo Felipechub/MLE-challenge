@@ -1,15 +1,12 @@
-# Standard library imports
 from datetime import datetime
 from typing import Tuple, List
 
-# Third-party imports
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
-from sklearn.utils import shuffle
 from joblib import dump, load
 
-# Constants
+
 HIGH_SEASON_RANGES = [
     ('15-Dec', '31-Dec'),
     ('1-Jan', '3-Mar'),
@@ -17,6 +14,7 @@ HIGH_SEASON_RANGES = [
     ('11-Sep', '30-Sep'),
 ]
 THRESHOLD_IN_MINUTES = 15
+
 
 class InvalidDateFormatError(Exception):
     """Exception raised for errors in the date format.
@@ -144,8 +142,8 @@ class DelayModel:
     def __init__(
         self
     ):
-        # self._model = LogisticRegression(random_state=1)
         self._model = None
+        
     def preprocess(
         self, 
         data: pd.DataFrame, 
@@ -205,7 +203,6 @@ class DelayModel:
         n_y1 = len(y_train[y_train == 1])
         class_weight = {1: n_y0/len(y_train), 0: n_y1/len(y_train)}
 
-        # Entrena el modelo con los datos ponderados por clase
         self._model = LogisticRegression(random_state=1, class_weight=class_weight)
         self._model.fit(features, y_train)
         

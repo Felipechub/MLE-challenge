@@ -28,7 +28,7 @@ STRESS_URL = https://ml-challenge-7unpbdm7oa-nn.a.run.app
 stress-test:
 	# change stress url to your deployed app 
 	mkdir reports || true
-	locust -f tests/stress/api-stress.py --print-stats --html reports/stress-test.html --run-time 60s --headless --users 100 --spawn-rate 1 -H $(STRESS_URL)
+	locust -f tests/stress/api_stress.py --print-stats --html reports/stress-test.html --run-time 60s --headless --users 100 --spawn-rate 1 -H $(STRESS_URL)
 
 .PHONY: model-test
 model-test:			## Run tests and coverage
