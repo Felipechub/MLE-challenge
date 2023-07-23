@@ -81,7 +81,7 @@ class TestBatchPipeline(unittest.TestCase):
         response = self.client.post("/predict", json=data)
         self.assertEqual(response.status_code, 400)
 
-    def test_should_failed_invalid_month(self):
+    def test_should_failed_invalid_MES(self):
         data = {
             "flights": [
                 {
