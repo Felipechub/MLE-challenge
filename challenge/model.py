@@ -158,12 +158,13 @@ def calculate_delay(data, threshold=15):
     """
     return np.where(data['min_diff'] > threshold, 1, 0)
 
-
+from sklearn.linear_model import LogisticRegression
 class DelayModel:
     def __init__(
         self
     ):
-        self._model = xgb.XGBClassifier(random_state=1, learning_rate=0.01)
+        # self._model = xgb.XGBClassifier(random_state=1, learning_rate=0.01)
+        self._model = LogisticRegression()
 
     def preprocess(
         self, 
@@ -231,13 +232,21 @@ class DelayModel:
             target (pd.DataFrame): target.
         """
         
+        # y_train = target.iloc[:, 0]
+
+        # n_y0 = len(y_train[y_train == 0])
+        # n_y1 = len(y_train[y_train == 1])
+        # scale = n_y0/n_y1
+
+        # self._model = xgb.XGBClassifier(random_state=1, learning_rate=0.01, scale_pos_weight = scale)
+        # self._model.fit(features, y_train)
         y_train = target.iloc[:, 0]
 
         n_y0 = len(y_train[y_train == 0])
         n_y1 = len(y_train[y_train == 1])
-        scale = n_y0/n_y1
 
-        self._model = xgb.XGBClassifier(random_state=1, learning_rate=0.01, scale_pos_weight = scale)
+        # Entrena el modelo con los datos ponderados por clase
+        self._model = LogisticRegression(random_state=1, class_weight={1: n_y0/len(y_train), 0: n_y1/len(y_train)})
         self._model.fit(features, y_train)
         
     def predict(

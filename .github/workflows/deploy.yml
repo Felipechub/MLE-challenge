@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-
+      - feature/deploy
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
@@ -46,4 +46,4 @@ jobs:
     - name: Deploy to GCP
       run: |
         gcloud builds submit --tag gcr.io/mlchallenge-79768/ml-challenge
-        gcloud -q run deploy ml-challenge --image gcr.io/mlchallenge-79768/ml-challenge --platform managed --region northamerica-northeast1 --allow-unauthenticated
+        gcloud -q run deploy ml-challenge2 --image gcr.io/mlchallenge-79768/ml-challenge --platform managed --region us-central1 --allow-unauthenticated
