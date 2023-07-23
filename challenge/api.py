@@ -101,6 +101,7 @@ async def post_predict(flight_info: FlightList) -> dict:
     except (ValueError, KeyError, InvalidDateFormatError) as e:
         return JSONResponse(status_code=400, content={"message": str(e)})
 
+
 @app.post("/train", status_code=200)
 async def train_model() -> dict:
     try:

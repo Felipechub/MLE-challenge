@@ -6,7 +6,7 @@ from typing import Tuple, List
 import numpy as np
 import pandas as pd
 from sklearn.utils import shuffle
-import xgboost as xgb
+from sklearn.linear_model import LogisticRegression
 from joblib import dump, load
 
 
@@ -69,34 +69,6 @@ def get_date_range(start, end, year):
     end_date = datetime.strptime(end, '%d-%b').replace(year=year)
     return start_date, end_date
 
-
-
-# def is_high_season(fecha):
-#     """
-#     Function to determine if a given date falls within the high season.
-    
-#     Args:
-#         fecha (str): Date in '%Y-%m-%d %H:%M:%S' format.
-        
-#     Returns:
-#         int: Returns 1 if the date falls within the high season, and 0 otherwise.
-#         If the date format is invalid, the function returns None and prints an error message.
-#     """
-#     try:
-#         fecha = datetime.strptime(fecha, '%Y-%m-%d %H:%M:%S')
-#     except ValueError:
-#         print(f"Invalid date format: {fecha}")
-#         return None
-    
-#     fecha_año = fecha.year
-
-#     for start, end in HIGH_SEASON_RANGES:
-#         range_start, range_end = get_date_range(start, end, fecha_año)
-#         if range_start <= fecha <= range_end:
-#             return 1
-
-#     return 0
-
 def is_high_season(date):
     """
     Function to determine if a given date falls within the high season.
@@ -158,13 +130,31 @@ def calculate_delay(data, threshold=15):
     """
     return np.where(data['min_diff'] > threshold, 1, 0)
 
-from sklearn.linear_model import LogisticRegression
+
+# Auxiliar Preprocess Functions
+def create_new_features(data):
+    data['period_day'] = data['Fecha-I'].apply(get_period_day)
+    data['high_season'] = data['Fecha-I'].apply(is_high_season)
+    data['min_diff'] = data.apply(get_min_diff, axis=1)
+    data['delay'] = calculate_delay(data, THRESHOLD_IN_MINUTES)
+    return data
+
+
+def encode_categorical_features(data):
+    features = pd.concat([
+        pd.get_dummies(data['OPERA'], prefix = 'OPERA'),
+        pd.get_dummies(data['TIPOVUELO'], prefix = 'TIPOVUELO'),
+        pd.get_dummies(data['MES'], prefix = 'MES')],
+        axis = 1
+    )
+    return features
+
+
 class DelayModel:
     def __init__(
         self
     ):
-        # self._model = xgb.XGBClassifier(random_state=1, learning_rate=0.01)
-        self._model = LogisticRegression()
+        self._model = LogisticRegression(random_state=1)
 
     def preprocess(
         self, 
@@ -184,40 +174,28 @@ class DelayModel:
             pd.DataFrame: features.
         """        
 
-        # Apply your preprocessing steps
-        data['period_day'] = data['Fecha-I'].apply(get_period_day)
-        data['high_season'] = data['Fecha-I'].apply(is_high_season)
-        data['min_diff'] = data.apply(get_min_diff, axis=1)
-        data['delay'] = np.where(data['min_diff'] > THRESHOLD_IN_MINUTES, 1, 0)
-        
-        training_data = shuffle(data[['OPERA', 'MES', 'TIPOVUELO', 'SIGLADES', 'DIANOM', 'delay']], random_state = 111)
-        features = pd.concat([
-            pd.get_dummies(training_data['OPERA'], prefix = 'OPERA'),
-            pd.get_dummies(training_data['TIPOVUELO'], prefix = 'TIPOVUELO'),
-            pd.get_dummies(training_data['MES'], prefix = 'MES')],
-            axis = 1
-        )
-        
-        top_10_features = [
-                    "OPERA_Latin American Wings",
-                    "MES_7",
-                    "MES_10",
-                    "OPERA_Grupo LATAM",
-                    "MES_12",
-                    "TIPOVUELO_I",
-                    "MES_4",
-                    "MES_11",
-                    "OPERA_Sky Airline",
-                    "OPERA_Copa Air"
-                ]
-        
-        # Check if the target column is specified
-        if target_column != None:
-            target = training_data[target_column]
+        data = create_new_features(data)
+        features = encode_categorical_features(data)
 
-            return features[top_10_features], pd.DataFrame(target)
+        top_10_features = [
+            "OPERA_Latin American Wings",
+            "MES_7",
+            "MES_10",
+            "OPERA_Grupo LATAM",
+            "MES_12",
+            "TIPOVUELO_I",
+            "MES_4",
+            "MES_11",
+            "OPERA_Sky Airline",
+            "OPERA_Copa Air"
+        ]
+        features = features[top_10_features]
+        
+        if target_column is not None:
+            target = data[target_column]
+            return features, pd.DataFrame(target)
         else:
-            return features[top_10_features]
+            return features
 
     def fit(
         self, 
@@ -231,15 +209,6 @@ class DelayModel:
             features (pd.DataFrame): preprocessed data.
             target (pd.DataFrame): target.
         """
-        
-        # y_train = target.iloc[:, 0]
-
-        # n_y0 = len(y_train[y_train == 0])
-        # n_y1 = len(y_train[y_train == 1])
-        # scale = n_y0/n_y1
-
-        # self._model = xgb.XGBClassifier(random_state=1, learning_rate=0.01, scale_pos_weight = scale)
-        # self._model.fit(features, y_train)
         y_train = target.iloc[:, 0]
 
         n_y0 = len(y_train[y_train == 0])
