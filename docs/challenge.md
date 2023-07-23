@@ -20,7 +20,7 @@
 - The use of the .to_list() method ensures a direct comparison of two lists. This rectifies a potential bug where, despite the DataFrame having the correct columns, the test would fail due to the type mismatch between a pandas Index object and a Python list. This adjustment maintains the spirit of the test while ensuring accurate results.
 
 
-### Methods `test_health_check`, `test_should_failed_invalid_TIPOVUELO`, `test_should_failed_invalid_month`, `test_should_failed_missing_feature`, `test_should_fail_invalid_month_type`, `test_OPERA_Latin_American_Wings`, and `test_train_model`
+### Methods `test_health_check`, `test_should_failed_invalid_TIPOVUELO`, `test_should_failed_invalid_month`, `test_should_failed_missing_feature`, `test_should_fail_invalid_month_type` and `test_OPERA_Latin_American_Wings`
 
 #### Changes Made
 - Added new tests to cover various cases and situations that might arise when interacting with the API.
@@ -37,8 +37,6 @@
 - test_should_fail_invalid_month_type: This test checks that the API returns an error when the data type provided for the MES field is incorrect. Again, this checks input data validation.
 
 - test_OPERA_Latin_American_Wings: This test seems to check that the API can handle a specific airline. This test makes sense if the API is expected to handle data from various airlines.
-
-- test_train_model: This test checks that the /train route of the API is functioning correctly and that the model is trained and saved successfully. This is useful for verifying that model training is functioning correctly.
 
 - These new tests cover a wider range of situations, thereby improving the robustness and quality of the code by ensuring it handles a variety of use cases and data input correctly.
 

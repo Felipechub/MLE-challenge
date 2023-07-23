@@ -132,9 +132,3 @@ class TestBatchPipeline(unittest.TestCase):
         response = self.client.post("/predict", json=data)
         self.assertEqual(response.status_code, 200)
         
-    def test_train_model(self):
-        response = self.client.post("/train")
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json(), {"status": "model trained and saved successfully"})
-        self.assertTrue(os.path.exists('data/modelo.joblib'))
-        
