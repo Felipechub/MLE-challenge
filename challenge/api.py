@@ -1,12 +1,16 @@
-import fastapi
+# Standard library imports
 from typing import List
-import uvicorn
 
+# Third-party imports
+import fastapi
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 import pandas as pd
-from challenge.model import DelayModel, InvalidDateFormatError
 import numpy as np
-from fastapi.responses import JSONResponse
+import uvicorn
+
+# Local imports
+from challenge.model import DelayModel, InvalidDateFormatError
 
 def create_features(flight_info_list: dict) -> pd.DataFrame:
     """

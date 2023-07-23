@@ -5,10 +5,18 @@ from typing import Tuple, List
 # Third-party imports
 import numpy as np
 import pandas as pd
-from sklearn.utils import shuffle
 from sklearn.linear_model import LogisticRegression
+from sklearn.utils import shuffle
 from joblib import dump, load
 
+# Constants
+HIGH_SEASON_RANGES = [
+    ('15-Dec', '31-Dec'),
+    ('1-Jan', '3-Mar'),
+    ('15-Jul', '31-Jul'),
+    ('11-Sep', '30-Sep'),
+]
+THRESHOLD_IN_MINUTES = 15
 
 class InvalidDateFormatError(Exception):
     """Exception raised for errors in the date format.
@@ -23,17 +31,6 @@ class InvalidDateFormatError(Exception):
         self.message = message
         super().__init__(self.message)
 
-
-# Constants
-HIGH_SEASON_RANGES = [
-    ('15-Dec', '31-Dec'),
-    ('1-Jan', '3-Mar'),
-    ('15-Jul', '31-Jul'),
-    ('11-Sep', '30-Sep'),
-]
-THRESHOLD_IN_MINUTES = 15
-
-# Functions
 def get_period_day(date):
     try:
         date_time = datetime.strptime(date, '%Y-%m-%d %H:%M:%S').time()
@@ -74,7 +71,7 @@ def is_high_season(date):
     Function to determine if a given date falls within the high season.
     
     Args:
-        fecha (str): Date in '%Y-%m-%d %H:%M:%S' format.
+        date (str): Date in '%Y-%m-%d %H:%M:%S' format.
         
     Returns:
         int: Returns 1 if the date falls within the high season, and 0 otherwise.
@@ -105,17 +102,13 @@ def get_min_diff(row):
         float: The difference in minutes between 'Fecha-O' and 'Fecha-I'.
     """
     try:
-        # Convert the dates to datetime within the function
-        fecha_o = datetime.strptime(row['Fecha-O'], '%Y-%m-%d %H:%M:%S')
-        fecha_i = datetime.strptime(row['Fecha-I'], '%Y-%m-%d %H:%M:%S')
+        date_o = datetime.strptime(row['Fecha-O'], '%Y-%m-%d %H:%M:%S')
+        date_i = datetime.strptime(row['Fecha-I'], '%Y-%m-%d %H:%M:%S')
 
-        # Calculate the difference in seconds and convert to minutes
-        min_diff = (fecha_o - fecha_i).total_seconds() / 60
+        min_diff = (date_o - date_i).total_seconds() / 60
     except Exception as e:
-        print(f"Error calculating min_diff: {e}")
-        return None
+        raise ValueError(f"Error al calcular min_diff: {e}")
     return min_diff
-
 
 def calculate_delay(data, threshold=15):
     """
@@ -130,15 +123,12 @@ def calculate_delay(data, threshold=15):
     """
     return np.where(data['min_diff'] > threshold, 1, 0)
 
-
-# Auxiliar Preprocess Functions
 def create_new_features(data):
     data['period_day'] = data['Fecha-I'].apply(get_period_day)
     data['high_season'] = data['Fecha-I'].apply(is_high_season)
     data['min_diff'] = data.apply(get_min_diff, axis=1)
     data['delay'] = calculate_delay(data, THRESHOLD_IN_MINUTES)
     return data
-
 
 def encode_categorical_features(data):
     features = pd.concat([
@@ -154,8 +144,8 @@ class DelayModel:
     def __init__(
         self
     ):
-        self._model = LogisticRegression(random_state=1)
-
+        # self._model = LogisticRegression(random_state=1)
+        self._model = None
     def preprocess(
         self, 
         data: pd.DataFrame, 
@@ -213,9 +203,10 @@ class DelayModel:
 
         n_y0 = len(y_train[y_train == 0])
         n_y1 = len(y_train[y_train == 1])
+        class_weight = {1: n_y0/len(y_train), 0: n_y1/len(y_train)}
 
         # Entrena el modelo con los datos ponderados por clase
-        self._model = LogisticRegression(random_state=1, class_weight={1: n_y0/len(y_train), 0: n_y1/len(y_train)})
+        self._model = LogisticRegression(random_state=1, class_weight=class_weight)
         self._model.fit(features, y_train)
         
     def predict(
